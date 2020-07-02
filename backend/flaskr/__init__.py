@@ -112,7 +112,7 @@ def create_app(test_config=None):
   Create an endpoint to POST a new question, 
   which will require the question and answer text, 
   category, and difficulty score.
-
+  
   TEST: When you submit a question on the "Add" tab, 
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
@@ -153,6 +153,19 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  @app.route('/questions',methods=['POST'])
+  def question_by_phrase():
+    data=request.get_json()
+    print(data)
+    questions =Question.query.filter(Question.question.ilike(data['searchTerm']))
+    formatted_quest= {question.format() for question in questions}
+    return jsonify({
+      "questions":formatted_quest,
+      "totalQuestions":len(questions),
+      "currentCategory":None
+      
+    })
+
 
   '''
   @TODO: 
