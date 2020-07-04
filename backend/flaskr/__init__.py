@@ -65,6 +65,9 @@ def create_app(test_config=None):
     start=(page-1)*10
     end=start+10
     
+    if(len(formatted_questions[start:end])==0):
+      abort(404)
+    
     return jsonify({
           'success': True,
           'questions': formatted_questions[start:end],
@@ -153,6 +156,9 @@ def create_app(test_config=None):
     data=request.get_json()['searchTerm']
     questions =Question.query.filter(Question.question.ilike('%{}%'.format(data))).all()
     # print("reaching here")
+    if not questions:
+      abort(404)
+    
     formatted_quest= [ question.format() for question in questions]
     
     
@@ -250,9 +256,17 @@ def create_app(test_config=None):
     return jsonify({
       "success":False,
       "error":404,
-      "Message":"not found"
+      "Message":"Not Found"
     }), 404
     
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    return jsonify({
+      "success":False,
+      "error":405,
+      "Message":"Method is Not allowed for requested URL"
+    })
+  
   @app.errorhandler(422)
   def unprocessable_entity(error):
     return jsonify({
