@@ -37,12 +37,6 @@ def create_app(test_config=None):
   def get_categories():
     categories= Category.query.all()
     formatted_categ = {category.id:category.type for category in categories}
-    # {category.id:category.type for category in categories}
-    # print(formatted_categ)
-    # categ_dict={}
-    # for diction in formatted_categ:
-    #   categ_dict[diction['id']]=diction['type']
-    
     return jsonify({
       "success":True,
       "categories":formatted_categ})
@@ -157,7 +151,6 @@ def create_app(test_config=None):
   def question_by_phrase():
     
     data=request.get_json()['searchTerm']
-    # print("printing this",data)
     questions =Question.query.filter(Question.question.ilike('%{}%'.format(data))).all()
     # print("reaching here")
     formatted_quest= [ question.format() for question in questions]
@@ -210,13 +203,13 @@ def create_app(test_config=None):
     try:
       data=request.get_json()
       # print(data[''])
-      question_ids=data['previous_questions']
+      questions_ids=data['previous_questions']
       quiz_catg=data['quiz_category']
       # print(question_ids,"--",quiz_catg)
       if quiz_catg['id'] == 0:
-        questions=Question.query.filter(~Question.id.in_(question_ids)).all()
+        questions=Question.query.filter(~Question.id.in_(questions_ids)).all()
       else:
-        questions=Question.query.join(Category,Category.id==Question.category).filter(~Question.id.in_(question_ids),Category.id == quiz_catg['id']).all()
+        questions=Question.query.join(Category,Category.id==Question.category).filter(~Question.id.in_(questions_ids),Category.id == quiz_catg['id']).all()
       formatted_quest=[]
       randomQuestionData=[]
       if questions:
@@ -274,7 +267,7 @@ def create_app(test_config=None):
       "success":False,
       "error":500,
       "Message":"Server Error"
-    })
+    }), 500
   
   
   return app
