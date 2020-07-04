@@ -155,10 +155,9 @@ def create_app(test_config=None):
   '''
   @app.route('/questionsSearch',methods=['POST'])
   def question_by_phrase():
-    # print("line1")
+    
     data=request.get_json()['searchTerm']
     # print("printing this",data)
-    
     questions =Question.query.filter(Question.question.ilike('%{}%'.format(data))).all()
     # print("reaching here")
     formatted_quest= [ question.format() for question in questions]
@@ -213,34 +212,23 @@ def create_app(test_config=None):
       # print(data[''])
       question_ids=data['previous_questions']
       quiz_catg=data['quiz_category']
-      print(question_ids,"--",quiz_catg)
+      # print(question_ids,"--",quiz_catg)
       if quiz_catg['id'] == 0:
-        questions=Question.query.all()
+        questions=Question.query.filter(~Question.id.in_(question_ids)).all()
       else:
         questions=Question.query.join(Category,Category.id==Question.category).filter(~Question.id.in_(question_ids),Category.id == quiz_catg['id']).all()
-      # if not quiz_catg:
-      #   abort(422)
-      
-      print(questions)
-      returned_ids=[]
+      formatted_quest=[]
       randomQuestionData=[]
-      found=False
       if questions:
-        returned_ids=[question.id for question in questions]
-        print(returned_ids)
-      if returned_ids:
-        randomQuestionId=random.choice(returned_ids)
-        for question in questions:
-          if question.id==randomQuestionId:
-            randomQuestionData.append(question.format())
-            found=True
-            break
+        formatted_quest=[question.format() for question in questions]
+        randomQuestionData=random.choice(formatted_quest)
       
-      if not found:
+      
+      if not questions:
         return jsonify({
           "success":True,
-          "questions":None
-        }) ,404
+          "questions":False
+        })
       else:
         return jsonify({
             "success":True,
@@ -250,42 +238,44 @@ def create_app(test_config=None):
     except :
       abort(422)
     
-    #   try:
-  #     data = request.get_json()
-  #     # check given category
-  #     category_id = int(data["quiz_category"])
-  #     category = Category.query.get(category_id)
-  #     previous_questions = data["previous_questions"]
-  #     if not category == None:  
-  #       if "previous_questions" in data and len(previous_questions) > 0:
-  #         questions = Question.query.filter(
-  #           Question.id.notin_(previous_questions),
-  #           Question.category == category.id
-  #           ).all()  
-  #       else:
-  #         questions = Question.query.filter(Question.category == category.id).all()
-  #     else:
-  #       if "previous_questions" in data and len(previous_questions) > 0:
-  #         questions = Question.query.filter(Question.id.notin_(previous_questions)).all()  
-  #       else:
-  #         questions = Question.query.all()
-  #     max = len(questions) - 1
-  #     if max > 0:
-  #       question = questions[random.randint(0, max)].format()
-  #     else:
-  #       question = False
-  #     return jsonify({
-  #       "success": True,
-  #       "question": question
-  #     })
-  #   except:
-  #     abort(500, "An error occured while trying to load the next question")
-    
+   
   '''
   @TODO: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success":False,
+      "error":400,
+      "Message":"Bad Request"
+    }), 400
+  
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      "success":False,
+      "error":404,
+      "Message":"not found"
+    }), 404
+    
+  @app.errorhandler(422)
+  def unprocessable_entity(error):
+    return jsonify({
+      "success":False,
+      "error":422,
+      "Message":"Unprocessable entity"
+    }), 422
+    
+  @app.errorhandler(500)
+  def internal_server_error(error):
+    return jsonify({
+      "success":False,
+      "error":500,
+      "Message":"Server Error"
+    })
+  
   
   return app
 
