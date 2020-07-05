@@ -77,9 +77,95 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code,404)
         self.assertTrue(data['Message'])
         
-    # def test_add_questions(self):
-    #     response=self.client().post()
+    def test_add_questions(self):
+        test_data={
+            "question":"Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?",
+            "answer":"Maya Angelou",
+            "category":'2',
+            "difficulty":4
+        }
+        response=self.client().post('/questions',json=test_data) #9 and 5 missing add it
+        data=json.loads(response.data)
         
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(data['success'],True) 
+    
+    def test_422_add_questions(self):
+        test_data={
+            "answer":"Maya Angelou",
+            "category":'2',
+            "difficulty":4
+        }
+        response=self.client().post('/questions',json=test_data) #9 and 5 missing add it
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,422)
+        self.assertEqual(data['success'],False)
+    
+    def test_search_question(self):
+        test_data={
+            "searchTerm":"Tom"
+        }
+        response=self.client().post('/questionsSearch',json=test_data)
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(data['success'],True)
+        self.assertTrue(data['questions'])
+
+    def test_404_search_question(self):
+        test_data={
+            "searchTerm":"jager"
+        }
+        response=self.client().post('/questionsSearch',json=test_data)
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,404)
+        self.assertEqual(data['success'],False)
+        self.assertTrue(data['Message'])
+    
+    def test_question_by_category(self):
+        response=self.client().get('/categories/1/questions')
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(data['success'],True)
+        self.assertTrue(data['questions'])
+        
+    def test_405_question_by_category(self):
+        response=self.client().get('/categories/1000/questions')
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,405)
+        self.assertEqual(data['success'],False)
+        self.assertTrue(data['Message'])
+        
+    def test_quiz(self):
+        test_data={  
+            'previous_questions': [],
+            'quiz_category': {
+                'type': 'Science',
+                'id': 1
+            }
+        }
+        response=self.client().post('/quizzes',json=test_data)
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(data['success'],True)
+        
+    def test_422_quiz(self):
+        test_data={
+            'previous_questions': [],
+            'quiz_category': {
+                'type': 'Science'
+            }
+        }
+        response=self.client().post('/quizzes',json=test_data)
+        data=json.loads(response.data)
+        
+        self.assertEqual(response.status_code,422)
+        self.assertEqual(data['success'],False)
     
 # Make the tests conveniently executable
 if __name__ == "__main__":

@@ -125,6 +125,8 @@ def create_app(test_config=None):
       db.session.add(question)
       # question.insert()
       selection = Question.query.order_by('id').all()
+      # selection2= Question.query.order_by('id').limit(1).all()
+      # print(selection,"---",selection2)
       db.session.commit()
     except :
       error=True
@@ -179,20 +181,19 @@ def create_app(test_config=None):
   '''
   @app.route('/categories/<int:catg_id>/questions',methods=['GET'])
   def questionByCategory(catg_id):
-    try:
-      # questions=db.session.query(Category,Question).join(Question,Question.category==Category.id).filter(Category.id==catg_id).all()
-      # The above query will return from both the tables where as below query will join but return only from questions 
-      questions=Question.query.join(Category, Question.category==Category.id).filter(Category.id==catg_id).all()
-      formatted_quest=[question.format() for question in questions]
-      return jsonify({
-        "success":True,
-        "questions":formatted_quest,
-        "total_questions":len(questions),
-        "current_category":None
-      })
-    except :
-      abort(404)
-
+    # questions=db.session.query(Category,Question).join(Question,Question.category==Category.id).filter(Category.id==catg_id).all()
+    # The above query will return from both the tables where as below query will join but return only from questions 
+    questions=Question.query.join(Category, Question.category==Category.id).filter(Category.id==catg_id).all()
+    if len(questions)==0:
+      abort(405)
+    formatted_quest=[question.format() for question in questions]
+    return jsonify({
+      "success":True,
+      "questions":formatted_quest,
+      "total_questions":len(questions),
+      "current_category":None
+    })
+    
   '''
   @TODO: 
   Create a POST endpoint to get questions to play the quiz. 
@@ -212,6 +213,9 @@ def create_app(test_config=None):
       questions_ids=data['previous_questions']
       quiz_catg=data['quiz_category']
       # print(question_ids,"--",quiz_catg)
+      if quiz_catg['id'] is None:
+        abort(422)
+      
       if quiz_catg['id'] == 0:
         questions=Question.query.filter(~Question.id.in_(questions_ids)).all()
       else:
@@ -265,7 +269,7 @@ def create_app(test_config=None):
       "success":False,
       "error":405,
       "Message":"Method is Not allowed for requested URL"
-    })
+    }) , 405
   
   @app.errorhandler(422)
   def unprocessable_entity(error):
